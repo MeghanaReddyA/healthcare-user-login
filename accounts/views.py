@@ -1,9 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from .models import Profile
-
+from .models import Profile, BlogPost
+from .forms import BlogPostForm
+from django.contrib.auth.decorators import login_required
 
 def signup_view(request):
     if request.method == "POST":
@@ -68,27 +69,63 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            return redirect("dashboard")
+            profile = Profile.objects.get(user=user)
+            
+            if profile.user_type == "doctor":
+                return redirect("doctor_dashboard")
+            else:
+                return redirect("patient_dashboard")
         else:
             messages.error(request, "Invalid username or password")
             return redirect("login")
 
     return render(request, "accounts/login.html")
 
-
-def dashboard_view(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
-
-    profile = Profile.objects.get(user=request.user)
-
-    context = {
-        "user": request.user,
-        "profile": profile,
-    }
-    return render(request, "accounts/dashboard.html", context)
-
 def logout_view(request):
     logout(request)
     messages.success(request, "You have logged out successfully")
     return redirect("login")
+
+@login_required
+def doctor_dashboard(request):
+    posts = BlogPost.objects.filter(doctor=request.user)
+    
+    if request.method == 'POST':
+        form = BlogPostForm(request.POST, request.FILES)
+        if form.is_valid():
+            blog = form.save(commit=False)
+            blog.doctor = request.user
+            blog.save()
+            return redirect('doctor_dashboard')
+    else:
+        form = BlogPostForm()
+    
+    context = {'form': form, 'posts': posts}
+    return render(request, 'accounts/doctor_dashboard.html', context)
+
+@login_required
+def patient_dashboard(request):
+    profile = Profile.objects.get(user=request.user)
+    
+    categories = [choice[0] for choice in BlogPost.CATEGORY_CHOICES]
+    
+    selected_category = request.GET.get('category')
+    
+    if selected_category:
+        posts = BlogPost.objects.filter(is_draft=False, category=selected_category)
+    else:
+        posts = BlogPost.objects.filter(is_draft=False)
+    
+    context = {
+        'profile': profile,
+        'posts': posts,
+        'categories': categories,
+        'selected_category': selected_category
+    }
+    return render(request, 'accounts/patient_dashboard.html', context)
+
+@login_required
+def blog_detail(request, blog_id):
+    blog = get_object_or_404(BlogPost, id=blog_id, is_draft=False)
+    context = {"blog": blog}
+    return render(request, "accounts/blog_detail.html", context)
