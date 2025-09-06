@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Dashboard</title>
+    <link rel="stylesheet" href="{% static 'accounts/style.css' %}">
+</head>
+<body>
+    <h2>Welcome Dr. {{ request.user.first_name }} {{ request.user.last_name }}</h2>
+
+    <h3>Your Blog Posts</h3>
+    <div class="blog-container">
+        {% for blog in posts %}
+            <div class="blog-card">
+                <h4>{{ blog.title }}</h4>
+                {% if blog.image %}
+                    <img src="{{ blog.image.url }}" alt="Blog Image" class="blog-image">
+                {% endif %}
+                <p><strong>Category:</strong> {{ blog.get_category_display }}</p>
+                <p><strong>Status:</strong> {% if blog.is_draft %}Draft{% else %}Published{% endif %}</p>
+                <p><strong>Summary:</strong> {{ blog.summary }}</p>
+                <p><strong>Content:</strong> {{ blog.content }}</p>
+                <small>Created: {{ blog.created_at|date:"M d, Y H:i" }}</small><br>
+                <small>Updated: {{ blog.updated_at|date:"M d, Y H:i" }}</small>
+            </div>
+        {% empty %}
+            <p>No blogs yet. Create one using the form below.</p>
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    <h3>Create a New Blog Post</h3>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+
+    <p><a href="{% url 'logout' %}">Logout</a></p>
+</body>
+</html>

@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Dashboard</title>
+    <link rel="stylesheet" href="{% static 'accounts/style.css' %}">
+</head>
+<body>
+    <h2>Welcome {{ request.user.first_name }} {{ request.user.last_name }}</h2>
+
+    <h5>Filter Blogs by Category</h5>
+    <form method="get">
+        <select name="category" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>
+                    {{ cat|title|cut:"_" }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+    
+    <h3>Available Blogs</h3>
+    <div class="blog-container">
+        {% for blog in posts %}
+            <div class="blog-card">
+                <h4>{{ blog.title }}</h4>
+                {% if blog.image %}
+                    <img src="{{ blog.image.url }}" alt="Blog Image" class="blog-image">
+                {% endif %}
+                <p><strong>Category:</strong> {{ blog.get_category_display }}</p>
+                <p>
+                    {% with blog.summary|truncatewords:15 as short_summary %}
+                        {{ short_summary }}
+                    {% endwith %}
+                </p>
+                <a href="{% url 'blog_detail' blog.id %}">Read More</a>
+            </div>
+        {% empty %}
+            <p>No blogs available yet.</p>
+        {% endfor %}
+    </div>
+
+    <p><a href="{% url 'logout' %}">Logout</a></p>
+</body>
+</html>

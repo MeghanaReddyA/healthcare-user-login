@@ -1,0 +1,22 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm p-4">
+        <h2 class="mb-3">{{ blog.title }}</h2>
+        
+        {% if blog.image %}
+            <img src="{{ blog.image.url }}" class="img-fluid rounded mb-3" alt="{{ blog.title }}">
+        {% endif %}
+        
+        <p><strong>Category:</strong> {{ blog.get_category_display }}</p>
+        <p><strong>Author:</strong> {{ blog.doctor.first_name }} {{ blog.doctor.last_name }}</p>
+        <p><strong>Published:</strong> {{ blog.created_at|date:"F j, Y, g:i a" }}</p>
+
+        <hr>
+        <p>{{ blog.content }}</p>
+
+        <a href="{% url 'patient_dashboard' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
